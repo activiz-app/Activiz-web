@@ -10,47 +10,84 @@ interface Props {
 }
 
 export function JoinDeepLink({ inviteCode }: Props) {
+  const [deviceType, setDeviceType] = useState<"ios" | "android" | "desktop" | null>(null)
   const [showFallback, setShowFallback] = useState(false)
-  const [isAndroid, setIsAndroid] = useState(false)
 
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase()
-    const android = /android/.test(ua)
-    const ios = /iphone|ipad|ipod/.test(ua)
-    setIsAndroid(android)
+    const isIOS = /iphone|ipad|ipod/.test(ua)
+    const isAndroid = /android/.test(ua)
 
-    if (ios) {
-      window.location.href = `activiz://join/${inviteCode}`
-      setTimeout(() => setShowFallback(true), 3000)
-    } else if (!android) {
+    if (isIOS) {
+      setDeviceType("ios")
+    } else if (isAndroid) {
+      setDeviceType("android")
+    } else {
+      setDeviceType("desktop")
       setShowFallback(true)
+      return
     }
-    // Android : l'utilisateur tape le bouton, pas d'auto-redirect possible
+
+    const deepLink = `activiz://join/${inviteCode}`
+
+    const tryOpenApp = () => {
+      const link = document.createElement("a")
+      link.href = deepLink
+      link.style.display = "none"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      const startTime = Date.now()
+      const timeout = setTimeout(() => {
+        if (Date.now() - startTime < 3000) {
+          window.location.href = isIOS ? APP_STORE_URL : PLAY_STORE_URL
+        }
+      }, 2500)
+
+      const handleVisibilityChange = () => {
+        if (document.hidden) clearTimeout(timeout)
+      }
+      const handlePageHide = () => clearTimeout(timeout)
+
+      document.addEventListener("visibilitychange", handleVisibilityChange)
+      window.addEventListener("pagehide", handlePageHide)
+    }
+
+    const redirectTimer = setTimeout(tryOpenApp, 1000)
+    return () => clearTimeout(redirectTimer)
   }, [inviteCode])
 
-  const intentUrl = `intent://join/${inviteCode}#Intent;scheme=activiz;package=app.activiz;S.browser_fallback_url=${encodeURIComponent(PLAY_STORE_URL)};end`
+  const storeUrl = deviceType === "ios" ? APP_STORE_URL : PLAY_STORE_URL
+  const storeName = deviceType === "ios" ? "App Store" : "Play Store"
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6 text-center">
         {!showFallback ? (
           <>
-            <div className="w-16 h-16 rounded-2xl bg-indigo-600 mx-auto" />
+            <div className="w-16 h-16 rounded-2xl bg-indigo-600 mx-auto animate-pulse" />
             <h1 className="text-2xl font-bold text-gray-900">Rejoindre le groupe</h1>
             <p className="text-gray-500 text-sm">
-              Appuie sur le bouton pour ouvrir Activiz.
+              Redirection vers Activiz en cours...
             </p>
-            {isAndroid && (
-              <a
-                href={intentUrl}
-                className="block w-full py-3 px-4 bg-indigo-600 text-white rounded-xl font-medium"
-              >
-                Ouvrir dans Activiz
-              </a>
+            {deviceType && (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-400">L&apos;application ne s&apos;ouvre pas ?</p>
+                <a
+                  href={storeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-3 px-4 bg-indigo-600 text-white rounded-xl font-medium"
+                >
+                  Télécharger sur {storeName}
+                </a>
+              </div>
             )}
           </>
         ) : (
           <>
+            <div className="w-16 h-16 rounded-2xl bg-indigo-600 mx-auto" />
             <h1 className="text-2xl font-bold text-gray-900">Télécharge Activiz</h1>
             <p className="text-gray-500 text-sm">
               Pour rejoindre ce groupe, télécharge l&apos;application.

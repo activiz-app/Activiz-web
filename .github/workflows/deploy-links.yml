@@ -1,0 +1,38 @@
+name: Deploy Links to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and push image
+        run: |
+          docker build -t registry.vktnas.synology.me/activiz-links-prod:latest .
+          docker push registry.vktnas.synology.me/activiz-links-prod:latest
+
+      - name: Copy docker-compose to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: docker-compose-prod.yml
+          target: ~/links/
+
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd links
+            docker compose -f docker-compose-prod.yml pull links
+            docker compose -f docker-compose-prod.yml up -d links
