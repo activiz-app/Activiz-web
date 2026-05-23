@@ -1,0 +1,17 @@
+services:
+  links:
+    image: registry.vktnas.synology.me/activiz-links-prod:latest
+    container_name: activiz-links
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    expose:
+      - "3000"
+    networks:
+      activiz-network:
+
+networks:
+  activiz-network:
+    external: true
+    name: activiz-network
