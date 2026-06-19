@@ -18,7 +18,7 @@ jobs:
           docker push registry.vktnas.synology.me/activiz-links-prod:latest
 
       - name: Copy docker-compose to VPS
-        uses: appleboy/scp-action@latest
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
