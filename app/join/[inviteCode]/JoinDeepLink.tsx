@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 
-const APP_STORE_URL = "https://apps.apple.com/app/activiz/id000000000" // TODO: remplacer
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.studiofleuve.activiz" // TODO: remplacer
+const APP_STORE_URL = "https://apps.apple.com/app/activiz/id6765621204"
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=app.activiz"
 
 interface Props {
   inviteCode: string
